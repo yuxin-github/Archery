@@ -72,6 +72,10 @@ env = environ.Env(
     ),
     CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2"),
     PASSWORD_MIXIN_PATH=(str, "sql.plugins.password:DummyMixin"),
+    OBS_AK=(str, ""),
+    OBS_SK=(str, ""),
+    OBS_SERVER=(str, ""),
+    OBS_BUCKET_NAME=(str, ""),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -510,3 +514,11 @@ try:
     from local_settings import *
 except ImportError:
     print("import local settings failed, ignored")
+
+# OBS设置
+OBS_CONFIG = {
+    'access_key_id': env("OBS_AK"),
+    'secret_access_key': env("OBS_SK"),
+    'server': env("OBS_SERVER"),  # 替换成你的 Endpoint
+    'bucket_name': env("OBS_BUCKET_NAME"),
+}

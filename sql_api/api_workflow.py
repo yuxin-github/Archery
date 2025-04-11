@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import traceback
 
 from django.contrib.auth.decorators import permission_required
@@ -13,6 +14,7 @@ from rest_framework.response import Response
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
+from common.utils.obs_utils import upload_to_obs
 from sql.engines import get_engine
 from sql.models import (
     SqlWorkflow,
@@ -473,10 +475,27 @@ class AddAttachment(views.APIView):
             workflow = SqlWorkflow.objects.get(id=workflow_id)
         except SqlWorkflow.DoesNotExist:
             return Response({"error": "SqlWorkflow not found"}, status=status.HTTP_404_NOT_FOUND)
-        # 反序列化文件数据
-        serializer = AttachmentSerializer(data=request.data)
-        if serializer.is_valid():
+        file = request.FILES.get('file')  # 获取上传的文件
+
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+        # 临时保存文件
+        temp_dir = "/tmp/django_upload/"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, file.name)
+        with open(temp_path, 'wb') as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+        # 上传到 OBS
+        try:
+            obs_url = upload_to_obs(temp_path)
+            # 反序列化文件数据
+            serializer = AttachmentSerializer(data={"file": obs_url})
+            serializer.is_valid(raise_exception=True)
             # 保存文件并关联到 Workflow
             serializer.save(workflow=workflow)
             return Response({"messages": "添加附件成功"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Upload failed: {str(e)}"}, status=500)
+        finally:
+            os.remove(temp_path)  # 删除临时文件

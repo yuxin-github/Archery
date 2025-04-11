@@ -256,7 +256,7 @@ def detail(request, workflow_id):
         "review_info": review_info,
         "manual": manual,
         "run_date": run_date,
-        "attach": f"{MEDIA_URL}{attach}",
+        "attach": attach,
     }
     return render(request, "detail.html", context)
 

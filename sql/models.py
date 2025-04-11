@@ -402,7 +402,7 @@ class SqlWorkflowAttach(models.Model):
     """
 
     workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
-    file = models.ImageField("附件", upload_to="attach/")
+    file = models.CharField("附件", max_length=255)
 
     class Meta:
         managed = True

@@ -61,6 +61,7 @@ def send_ai(workflow_id: int, db_name: str, instance: int) -> str:
     sql = get_top10_sql(sql)
     # 获取表结构数据
     table_metas = get_table_fields(db_name=db_name, sql_content=sql, instance=instance)
+    print(table_metas)
     messages = f"""以下是表结构：{table_metas}。
 请审核以下 SQL：{sql}。
     """
